@@ -1,0 +1,12 @@
+<!-- products/templates/admin/products/upload_products_csv.html -->
+
+{% extends "admin/base_site.html" %}
+{% block content %}
+<h2>Upload Products via CSV</h2>
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="button">Upload</button>
+</form>
+<p><strong>CSV format:</strong> Category, SubCategory, Brand, Name, Description, Price, Stock, Image, Attributes (JSON)</p>
+{% endblock %}

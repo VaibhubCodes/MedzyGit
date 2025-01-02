@@ -1,0 +1,14 @@
+<!-- products/templates/admin/products/product_changelist.html -->
+
+{% extends "admin/change_list.html" %}
+
+{% block object-tools %}
+<div class="object-tools">
+    <ul class="changelist-actions">
+        <li>
+            <a href="{% url 'admin:upload_products_csv' %}" class="button">Upload Product CSV</a>
+        </li>
+    </ul>
+</div>
+{{ block.super }}
+{% endblock %}
