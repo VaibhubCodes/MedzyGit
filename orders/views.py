@@ -374,9 +374,107 @@ class OrderStatusListView(generics.ListAPIView):
 
     def get_queryset(self):
         return OrderStatus.objects.filter(order__user=self.request.user)
+    
 class OrderListView(generics.ListAPIView):
     serializer_class = OrderSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         return Order.objects.filter(user=self.request.user).order_by('-created_at')
+    def get_queryset(self):
+        status = self.request.query_params.get('status')
+        if status:
+            return Order.objects.filter(user=self.request.user, status=status).order_by('-created_at')
+        return Order.objects.filter(user=self.request.user).order_by('-created_at')
+
+class OrderDetailView(generics.RetrieveAPIView):
+    serializer_class = OrderSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Order.objects.filter(user=self.request.user)
+
+class AdminOrderStatusUpdateView(generics.UpdateAPIView):
+    queryset = OrderStatus.objects.all()
+    serializer_class = OrderStatusSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+    def update(self, request, *args, **kwargs):
+        order_id = kwargs.get("pk")
+        new_status = request.data.get("status")
+
+        if not new_status:
+            return Response({"detail": "Status is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Validate the status
+        valid_statuses = dict(OrderStatus.STATUS_CHOICES).keys()
+        if new_status not in valid_statuses:
+            return Response({"detail": "Invalid status."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Fetch the order and update its status
+        order = get_object_or_404(Order, id=order_id)
+        updated_status = OrderStatus.update_status(order, new_status)
+
+        # Notify the user
+        Notification.objects.create(
+            user=order.user,
+            title="Order Status Update",
+            message=f"Your order #{order.id} status has been updated to {updated_status.status}."
+        )
+        send_push_notification(
+    title="Order Status Update",
+    message=f"Your order #{order.id} status is now {updated_status.status}."
+)
+
+
+        return Response(OrderStatusSerializer(updated_status).data, status=status.HTTP_200_OK)
+
+
+
+class AdminOrderListView(generics.ListAPIView):
+    serializer_class = OrderSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def get_queryset(self):
+        return Order.objects.all().order_by('-created_at')
+
+class AssignDeliveryPersonnelView(generics.UpdateAPIView):
+    queryset = Order.objects.all()
+    permission_classes = [permissions.IsAdminUser]
+
+    def update(self, request, *args, **kwargs):
+        order = self.get_object()
+        delivery_person_id = request.data.get('delivery_person_id')
+        delivery_person = get_object_or_404(User, id=delivery_person_id)
+        order.delivery_person = delivery_person
+        order.save()
+        return Response({"detail": "Delivery personnel assigned successfully."}, status=status.HTTP_200_OK)
+
+class CancelOrderView(generics.UpdateAPIView):
+    queryset = Order.objects.all()
+    serializer_class = OrderStatusSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def update(self, request, *args, **kwargs):
+        order_id = kwargs.get("pk")
+        order = get_object_or_404(Order, id=order_id, user=request.user)
+
+        # Check if the order can be canceled
+        if order.latest_status.status in ["Completed", "Cancelled"]:
+            return Response({"detail": "Order cannot be cancelled."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Update the order status to 'Cancelled'
+        updated_status = OrderStatus.update_status(order, "Cancelled")
+
+        # Notify the user
+        Notification.objects.create(
+            user=order.user,
+            title="Order Cancelled",
+            message=f"Your order #{order.id} has been cancelled."
+        )
+        send_push_notification(
+            title="Order Cancelled",
+            message=f"Your order #{order.id} has been cancelled."
+        )
+
+        return Response({"detail": "Order cancelled successfully."}, status=status.HTTP_200_OK)

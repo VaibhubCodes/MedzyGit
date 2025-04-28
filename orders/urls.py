@@ -11,7 +11,7 @@ from .views import (
     CartItemUpdateView,
     RazorpayPaymentVerificationView,
     ApplyCouponView,
-    OrderListView
+    OrderListView, OrderDetailView,CancelOrderView,AdminOrderListView,AdminOrderStatusUpdateView,AssignDeliveryPersonnelView
 )
 
 urlpatterns = [
@@ -25,5 +25,9 @@ urlpatterns = [
     path('payment/verify/', RazorpayPaymentVerificationView.as_view(), name='payment-verify'),
     path('cart/apply_coupon/', ApplyCouponView.as_view(), name='apply-coupon'),
     path('order/list/', OrderListView.as_view(), name='order-list'),  # New endpoint for listing orders
-
+    path('order/<int:pk>/', OrderDetailView.as_view(), name='order-detail'),
+    path('admin/order/list/', AdminOrderListView.as_view(), name='admin-order-list'),
+    path('admin/order/status/update/<int:pk>/', AdminOrderStatusUpdateView.as_view(), name='admin-order-status-update'),
+    path('admin/order/assign/<int:pk>/', AssignDeliveryPersonnelView.as_view(), name='assign-delivery-personnel'),
+    path('orders/<int:pk>/cancel/', CancelOrderView.as_view(), name='cancel-order'),
 ]

@@ -1,5 +1,6 @@
 # orders/serializers.py
-
+from users.models import User
+from users.serializers import UserSerializer
 from rest_framework import serializers
 from .models import Cart, CartItem, Order, OrderItem, OrderStatus, Product, ProductAttribute, Payment, Address
 
@@ -63,11 +64,20 @@ class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
     payment_details = serializers.SerializerMethodField()
     latest_status = serializers.SerializerMethodField()
-    delivery_address = AddressSerializer(read_only=True)  # Updated to serialize full address details
+    delivery_address = AddressSerializer(read_only=True)
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)  # Format date and time
+    user = serializers.SerializerMethodField()  # Use a custom field for user details
 
     class Meta:
         model = Order
-        fields = ['id', 'user', 'total_amount', 'delivery_address', 'items', 'payment_details', 'latest_status']
+        fields = ['id', 'user', 'total_amount', 'delivery_address', 'items', 'payment_details', 'latest_status','created_at']
+
+    def get_user(self, obj):
+        # Fetch the full user details
+        user = User.objects.filter(id=obj.user.id).first()
+        if user:
+            return {"id": user.id, "name": user.name, "email": user.email}
+        return None
 
     def get_payment_details(self, obj):
         payment = Payment.objects.filter(order=obj).first()

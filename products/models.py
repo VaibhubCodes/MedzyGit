@@ -36,7 +36,7 @@ class Product(models.Model):
     stock = models.PositiveIntegerField()
     image = models.ImageField(upload_to='products/images/', blank=True, null=True)
     created_at = models.DateTimeField(blank=True, auto_now_add=True)
-
+    
     def __str__(self):
         return self.name
 

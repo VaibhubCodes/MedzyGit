@@ -197,9 +197,8 @@ class OrderAdmin(admin.ModelAdmin):
 
     # Display the latest order status
     def get_current_status(self, obj):
-        latest_status = obj.status_updates.order_by('-updated_at').first()
-        return latest_status.status if latest_status else 'No Status'
-    get_current_status.short_description = 'Status'
+        return obj.latest_status.status if hasattr(obj, 'latest_status') and obj.latest_status else 'No Status'
+        get_current_status.short_description = 'Status'
 
     # Custom method to display payment method
     def get_payment_method(self, obj):

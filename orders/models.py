@@ -61,14 +61,24 @@ class OrderStatus(models.Model):
         ('Pending', 'Pending'),
         ('Approved', 'Approved'),
         ('On Route', 'On Route'),
-        ('Completed', 'Completed')
+        ('Completed', 'Completed'),
+        ('Cancelled', 'Cancelled'),  # Add Cancelled status
     ]
-    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='status_updates')
+    order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='latest_status')
     status = models.CharField(max_length=50, choices=STATUS_CHOICES)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"Order {self.order.id} - {self.status}"
+
+    @staticmethod
+    def update_status(order, new_status):
+        """Updates or creates the status for an order."""
+        order_status, created = OrderStatus.objects.get_or_create(order=order)
+        order_status.status = new_status
+        order_status.save()
+        return order_status
+
 
 
 @receiver(post_save, sender='orders.OrderStatus')

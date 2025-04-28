@@ -6,7 +6,7 @@ class UserSerializer(serializers.ModelSerializer):
     referral_code = serializers.CharField(write_only=True, required=False)
     password = serializers.CharField(write_only=True, required=True)
     profile_photo = serializers.ImageField(required=False)  # Add profile photo field
-
+    
     class Meta:
         model = User
         fields = [
@@ -82,9 +82,19 @@ class UserSerializer(serializers.ModelSerializer):
 class AddressSerializer(serializers.ModelSerializer):
     class Meta:
         model = Address
-        fields = ['id', 'address_type', 'street_address', 'city', 'state', 'postal_code', 'country']
+        fields = [
+            'id', 'address_type', 'street_address', 'city', 'state', 'postal_code',
+            'country', 'latitude', 'longitude', 'current_address'  # ✅ Include location fields
+        ]
 
 class ReferralSerializer(serializers.ModelSerializer):
     class Meta:
         model = Referral
         fields = ['id', 'user', 'referred_user', 'reward_points']
+
+from .models import WalletTransaction
+
+class WalletTransactionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WalletTransaction
+        fields = ['id', 'transaction_type', 'amount', 'timestamp', 'description']
